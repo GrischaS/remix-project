@@ -6,6 +6,7 @@ import { Plugin } from '@remixproject/engine';
 import { IMCPResource, IMCPResourceContent } from '../../types/mcp';
 import { BaseResourceProvider } from '../registry/RemixResourceProviderRegistry';
 import { ResourceCategory } from '../types/mcpResources';
+import type { ScopesData } from '@remix-project/remix-debug'
 
 export class DebuggingResourceProvider extends BaseResourceProvider {
   name = 'debugging';
@@ -95,8 +96,7 @@ export class DebuggingResourceProvider extends BaseResourceProvider {
 
   private async getCurrentSourceLocation(plugin: Plugin): Promise<IMCPResourceContent> {
     try {
-      const result = await plugin.call('debugger', 'getCurrentSourceLocation');
-      console.log('getCurrentSourceLocation', result)
+      const result = await plugin.call('debugger', 'getCurrentSourceLocation')
       if (!result) {
         return this.createTextContent(
           'debug://current-debugging-step',
@@ -129,7 +129,7 @@ export class DebuggingResourceProvider extends BaseResourceProvider {
    *    - Values: Scope objects with:
    *      * firstStep: VM trace index where scope begins
    *      * lastStep: VM trace index where scope ends
-   *      * locals: Map of local variables (variable name -> {name, type, stackDepth, sourceLocation})
+   *      * locals: Map of local variables (variable name -> {name, type, stackIndex, sourceLocation})
    *      * isCreation: Boolean indicating if this is a contract creation context
    *      * gasCost: Total gas consumed within this scope
    *
@@ -148,8 +148,7 @@ export class DebuggingResourceProvider extends BaseResourceProvider {
   `
   private async getCallTreeScopes(plugin: Plugin): Promise<IMCPResourceContent> {
     try {
-      const result = await plugin.call('debugger', 'getCallTreeScopes');
-      console.log('getCallTreeScopes', result)
+      const result = await plugin.call('debugger', 'getCallTreeScopes') as ScopesData
       if (!result) {
         return this.createTextContent(
           'debug://call-tree-scopes',
@@ -157,11 +156,64 @@ export class DebuggingResourceProvider extends BaseResourceProvider {
         );
       }
 
+      // Process scopes to replace functionDefinition with id and name only, and remove abi properties
+      let processedScopes = {};
+      // Process functionDefinitionsByScope to replace functionDefinition with id and name only
+      let processedFunctionDefinitionsByScope = {};
+      try {
+        if (result.scopes) {
+          for (const [scopeId, scope] of Object.entries(result.scopes)) {
+            const scopeData = scope
+            const processedScope = { ...scopeData } as any
+
+            // Replace functionDefinition with just id and name
+            if (scopeData.functionDefinition) {
+              processedScope.functionDefinition = {
+                id: scopeData.functionDefinition.id,
+                name: scopeData.functionDefinition.name
+              };
+            }
+
+            // Process locals to remove abi properties
+            if (scopeData.locals) {
+              const processedLocals = {};
+              for (const [varName, variable] of Object.entries(scopeData.locals)) {
+                const variableData = variable as any;
+                const processedVariable = { ...variableData };
+                // Remove abi property if it exists
+                delete processedVariable.abi;
+                processedLocals[varName] = processedVariable;
+              }
+              processedScope.locals = processedLocals;
+            }
+
+            processedScopes[scopeId] = processedScope;
+          }
+        }
+
+        if (result.functionDefinitionsByScope) {
+          for (const [scopeId, funcDefWithInputs] of Object.entries(result.functionDefinitionsByScope)) {
+            const funcDefData = funcDefWithInputs as any;
+            processedFunctionDefinitionsByScope[scopeId] = {
+              functionDefinition: {
+                id: funcDefData.functionDefinition.id,
+                name: funcDefData.functionDefinition.name
+              },
+              inputs: funcDefData.inputs
+            };
+          }
+        }
+      } catch (e) {
+        console.warn('Error processing call tree scopes for output (using the full output): ', e);
+        processedScopes = result.scopes;
+        processedFunctionDefinitionsByScope = result.functionDefinitionsByScope;
+      }
+
       return this.createJsonContent('debug://call-tree-scopes', {
         success: true,
-        scopes: result.scopes,
+        scopes: processedScopes,
         scopeStarts: result.scopeStarts,
-        functionDefinitionsByScope: result.functionDefinitionsByScope,
+        functionDefinitionsByScope: processedFunctionDefinitionsByScope,
         functionCallStack: result.functionCallStack,
         metadata: {
           description: this.callTreeScopesDesc,

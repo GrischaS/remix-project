@@ -120,8 +120,6 @@ module.exports = {
     browser
       .refreshPage()
       .clickLaunchIcon('solidity')
-      //.pause()
-      //.setSolidityCompilerVersion('soljson-v0.6.12+commit.27d51765.js')
       .testContracts('withABIEncoderV2.sol', sources[2]['withABIEncoderV2.sol'], ['test'])
       .clickLaunchIcon('udapp')
       .selectContract('test')
@@ -146,7 +144,7 @@ module.exports = {
         In that case the source highlight at 261 should be the same as for step 262
       */
 
-      .goToVMTraceStep(266)
+      .goToVMTraceStep(265)
       .checkVariableDebug('soliditylocals', localVariable_step266_ABIEncoder) // locals should not be initiated at this point, only idAsk should
       .goToVMTraceStep(717)
       .checkVariableDebug('soliditylocals', localVariable_step717_ABIEncoder) // all locals should be initiaed

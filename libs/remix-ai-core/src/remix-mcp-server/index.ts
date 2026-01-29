@@ -50,6 +50,11 @@ export type {
   ValidationWarning
 } from './middleware/ValidationMiddleware';
 
+export type {
+  FilePermissionMiddleware,
+  FilePermissionResult
+} from './middleware/FilePermissionMiddleware';
+
 // Registries
 export {
   RemixToolRegistry,

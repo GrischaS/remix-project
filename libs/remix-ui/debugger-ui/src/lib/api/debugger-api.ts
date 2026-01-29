@@ -52,9 +52,16 @@ export const DebuggerApiMixin = (Base) => class extends Base {
     return this.currentSourceLocation
   }
 
-  async highlight (lineColumnPos, path, rawLocation, stepDetail, lineGasCost, origin?) {
+  async highlight (lineColumnPos, path, rawLocation, stepDetail, lineGasCost, origin?, step?) {
     // Pass the main contract being debugged as the origin for proper resolution
     await this.call('editor', 'highlight', lineColumnPos, path, '', { focus: true, origin })
+
+    // Get current step index from debugger backend if not provided
+    let currentStep = step
+    if (currentStep === undefined && this.debuggerBackend && this.debuggerBackend.step_manager) {
+      currentStep = this.debuggerBackend.step_manager.currentStepIndex
+    }
+
     const label = `${stepDetail.op} costs ${stepDetail.gasCost} gas - this line costs ${lineGasCost} gas - ${stepDetail.gas} gas left`
     const linetext: lineText = {
       content: label,
@@ -69,7 +76,14 @@ export const DebuggerApiMixin = (Base) => class extends Base {
       ],
     }
     await this.call('editor', 'addLineText' as any, linetext, path)
-    this.currentSourceLocation = { line: lineColumnPos.start.line + 1, path, stepDetail, lineGasCost, origin }
+    this.currentSourceLocation = {
+      line: lineColumnPos.start.line + 1,
+      path,
+      stepDetail,
+      lineGasCost,
+      origin,
+      step: currentStep
+    }
   }
 
   async getFile (path) {

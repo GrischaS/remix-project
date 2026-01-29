@@ -97,7 +97,7 @@ export class Debugger {
 
           let lineGasCostObj = null
           try {
-            lineGasCostObj = await this.debugger.callTree.getGasCostPerLine(rawLocation.file, lineColumnPos.start.line)
+            lineGasCostObj = await this.debugger.callTree.getGasCostPerLine(rawLocation.file, lineColumnPos.start.line, rawLocationAndOpcode.scopeId)
           } catch (e) {
             console.log(e)
           }

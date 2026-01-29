@@ -270,10 +270,10 @@ export class MCPInferencer extends RemoteInferencer implements ICompletions, IGe
         }))
       });
 
-      const workspaceResource: IMCPResource = {
-        uri: 'project://structure',
-        name: 'Project Structure',
-        description: 'Hierarchical view of project files and folders',
+      const contextResource: IMCPResource = {
+        uri: 'context://workspace',
+        name: 'Workspace Context',
+        description: 'Complete IDE context including files, editor state, git status, and diagnostics',
         mimeType: 'application/json',
       };
 
@@ -281,14 +281,14 @@ export class MCPInferencer extends RemoteInferencer implements ICompletions, IGe
       const hasInternalServer = this.mcpClients.has('Remix IDE Server')
 
       if (hasInternalServer) {
-        const existingProjectStructure = selectedResources.find(r => r.resource.uri === 'project://structure');
+        const existingProjectStructure = selectedResources.find(r => r.resource.uri === 'context://workspace');
         if (existingProjectStructure === undefined) {
           selectedResources.push({
-            resource: workspaceResource,
+            resource: contextResource,
             serverName: 'Remix IDE Server',
             score: 1.0, // High score to ensure it's included
             components: { keywordMatch: 1.0, domainRelevance: 1.0, typeRelevance:1, priority:1, freshness:1 },
-            reasoning: 'Project structure always included for internal remix MCP server'
+            reasoning: 'IDE context always included for internal remix MCP server'
           });
         }
       }
@@ -852,6 +852,7 @@ ${toolsList}`,
       // Convert code execution result to MCP tool result format
       if (result.success) {
         const content = [];
+        let isError = false
 
         // Add all tool call results with their full payloads
         if (result.toolCallRecords && result.toolCallRecords.length > 0) {
@@ -864,6 +865,7 @@ ${toolsList}`,
             const toolResult = record.result.content
               .map((c: any) => c.text || JSON.stringify(c))
               .join('\n');
+            isError = record.result?.isError
 
             content.push({
               type: 'text' as const,
@@ -893,7 +895,7 @@ ${toolsList}`,
 
         return {
           content: content.length > 0 ? content : [{ type: 'text', text: 'Code executed successfully with no output' }],
-          isError: false
+          isError: isError
         };
       } else {
         const content = [];

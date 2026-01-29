@@ -11,6 +11,7 @@ import { type BreakpointManager } from './code/breakpointManager'
 import { CompilerAbstract } from '@remix-project/remix-solidity'
 import { BrowserProvider } from 'ethers'
 import type { OffsetToLineColumnConverterFn } from './types'
+import { findVariableStackPosition } from './solidity-decoder/localDecoder'
 
 /**
   * Ethdebugger is a wrapper around a few classes that helps debug a transaction
@@ -178,7 +179,8 @@ export class Ethdebugger {
     const address = this.traceManager.getCurrentCalledAddressAt(step)
     const calldata = this.traceManager.getCallDataAt(step)
     const storageViewer = new StorageViewer({ stepIndex: step, tx: this.tx, address: address }, this.storageResolver, this.traceManager)
-    return await variable.type.decodeFromStack(variable.stackDepth, stack, memory, storageViewer, calldata, null, variable)
+    const currentStackIndex = findVariableStackPosition(this.callTree, step, variable)
+    return await variable.type.decodeFromStack(currentStackIndex, stack, memory, storageViewer, calldata, null, variable)
   }
 
   /**

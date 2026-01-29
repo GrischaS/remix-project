@@ -107,7 +107,11 @@ export class ProjectResourceProvider extends BaseResourceProvider {
       path = path.substring(1);
     }
 
-    if (visited.has(path) || path.includes('node_modules') || path.includes('.git') || path.includes('.deps')) {
+    if (visited.has(path) ||
+        path.includes('node_modules') ||
+        path.includes('.git') ||
+        path.includes('.deps') ||
+        path.includes('artifacts/build-info')) {
       return;
     }
     visited.add(path);
@@ -290,7 +294,9 @@ export class ProjectResourceProvider extends BaseResourceProvider {
 
           for (const file of fileList.slice(0, 100)) { // Limit to prevent memory issues
             const fullPath = file;
-            if (!file.startsWith('.') && !file.includes('node_modules')) {
+            if (!file.startsWith('.') &&
+                !file.includes('node_modules') &&
+                !file.includes('artifacts/build-info')) {
               const child = await this.buildDirectoryTree(plugin, fullPath, maxDepth - 1);
               if (child) children.push(child);
             }
@@ -339,7 +345,9 @@ export class ProjectResourceProvider extends BaseResourceProvider {
 
         for (const file of fileList) {
           const fullPath = file;
-          if (!file.startsWith('.') && !file.includes('node_modules')) {
+          if (!file.startsWith('.') &&
+              !file.includes('node_modules') &&
+              !file.includes('artifacts/build-info')) {
             await this.scanForImports(plugin, fullPath, dependencies);
           }
         }

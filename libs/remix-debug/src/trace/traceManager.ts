@@ -153,7 +153,7 @@ export class TraceManager {
     if (this.trace[stepIndex] && this.trace[stepIndex].stack) { // there's always a stack
       if (Array.isArray(this.trace[stepIndex].stack)) {
         const stack = this.trace[stepIndex].stack.slice(0)
-        stack.reverse()
+        // stack.reverse()
         return stack.map(el => toHexPaddedString(el))
       } else {
         // it's an object coming from the VM.
@@ -166,7 +166,7 @@ export class TraceManager {
             stack.push(toHexPaddedString(this.trace[stepIndex].stack[prop]))
           }
         }
-        stack.reverse()
+        // stack.reverse()
         return stack
       }
     } else {

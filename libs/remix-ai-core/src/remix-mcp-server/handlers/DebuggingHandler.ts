@@ -124,7 +124,7 @@ export class DecodeLocalVariableHandler extends BaseToolHandler {
       const result = await plugin.call('debugger', 'decodeLocalVariable', args.variableId, args.stepIndex);
 
       if (result === null) {
-        return this.createErrorResult('Debugger backend is not initialized. Please start a debug session first.');
+        return this.createErrorResult('The local variable might not be available at the current debug step. Please check the current execution step!');
       }
 
       return this.createSuccessResult({
@@ -187,7 +187,7 @@ export class DecodeStateVariableHandler extends BaseToolHandler {
       const result = await plugin.call('debugger', 'decodeStateVariable', args.variableId, args.stepIndex);
 
       if (result === null) {
-        return this.createErrorResult('Debugger backend is not initialized. Please start a debug session first.');
+        return this.createErrorResult('The state variable might not be available at the current debug step. Please check the current execution step!');
       }
 
       return this.createSuccessResult({

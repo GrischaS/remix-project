@@ -6,6 +6,7 @@ import { initInstance, emptyInstance, setAiLoading } from './actions';
 
 const getNetworkName = (chainId: number | string): string => {
   const id = Number(chainId);
+  if (isNaN(id)) return 'Unknown Chain';
   switch (id) {
   case 1: return 'Mainnet';
   case 11155111: return 'Sepolia';
@@ -13,6 +14,25 @@ const getNetworkName = (chainId: number | string): string => {
   case 137: return 'Polygon';
   case 42161: return 'Arbitrum';
   case 10: return 'Optimism';
+  case 8453: return 'Base';
+  case 84532: return 'Base Sepolia';
+  case 84531: return 'Base Goerli';
+  case 43114: return 'Avalanche';
+  case 56: return 'BSC';
+  case 324: return 'zkSync';
+  case 100: return 'Gnosis';
+  case 42220: return 'Celo';
+  case 7777777: return 'Zora';
+  case 80001: return 'Polygon Mumbai';
+  case 80002: return 'Polygon Amoy';
+  case 421614: return 'Arbitrum Sepolia';
+  case 11155420: return 'Optimism Sepolia';
+  case 59144: return 'Linea';
+  case 59141: return 'Linea Sepolia';
+  case 534352: return 'Scroll';
+  case 534351: return 'Scroll Sepolia';
+  case 81457: return 'Blast';
+  case 168587773: return 'Blast Sepolia';
   default: return `Chain ${id}`;
   }
 };
@@ -35,13 +55,16 @@ export class RemixClient extends PluginClient {
 
         if (!data.slug || !data.content) return;
 
+        const workspaceName = data.slug;
+
         try {
-          await this.dappManager.saveGeneratedFiles(data.slug, data.content);
+          await this.dappManager.saveGeneratedFiles(workspaceName, data.content);
 
           if (data.isUpdate) {
 
             this.internalEvents.emit('dappUpdated', {
-              slug: data.slug,
+              slug: workspaceName,
+              workspaceName,
               files: data.content
             });
 
@@ -49,13 +72,13 @@ export class RemixClient extends PluginClient {
             this.call('notification', 'toast', 'DApp code updated successfully.');
 
           } else {
-            const updatedConfig = await this.dappManager.updateDappConfig(data.slug, { status: 'created' });
+            const updatedConfig = await this.dappManager.updateDappConfig(workspaceName, { status: 'created' });
 
             if (updatedConfig) {
               this.internalEvents.emit('dappCreated', updatedConfig);
 
               // @ts-ignore
-              this.call('notification', 'toast', `DApp '${updatedConfig.name}' created!`);
+              this.call('notification', 'toast', `DApp '${updatedConfig.name}' created in workspace '${workspaceName}'!`);
             }
           }
 
@@ -120,6 +143,7 @@ export class RemixClient extends PluginClient {
 
       this.internalEvents.emit('creatingDappStart', {
         slug: newDappConfig.slug,
+        workspaceName: newDappConfig.workspaceName,
         dappConfig: newDappConfig
       });
 
